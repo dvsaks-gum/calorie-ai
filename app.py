@@ -34,7 +34,7 @@ if uploaded_file is not None:
             img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
             response = client.chat.completions.create(
-                model="grok-2-vision-latest",
+                model="grok-vision-beta",
                 messages=[
                     {
                         "role": "user",
