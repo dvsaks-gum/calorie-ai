@@ -3,6 +3,7 @@ from PIL import Image
 import base64
 from io import BytesIO
 import requests
+import uuid   # ← добавили для правильного RqUID
 
 st.set_page_config(page_title="ЖруСчиталка", page_icon="🍖", layout="centered")
 
@@ -32,19 +33,20 @@ if uploaded_file is not None:
             token_headers = {
                 "Authorization": f"Basic {credentials}",
                 "Content-Type": "application/x-www-form-urlencoded",
-                "RqUID": "1"
+                "RqUID": str(uuid.uuid4())          # ← теперь правильный UUID
             }
             token_data = {"scope": "GIGACHAT_API_PERS"}
 
-            token_response = requests.post(token_url, headers=token_headers, data=token_data, verify=False, timeout=10)
+            token_response = requests.post(token_url, headers=token_headers, data=token_data, verify=False, timeout=15)
 
             if token_response.status_code != 200:
                 st.error(f"Ошибка получения токена: {token_response.status_code}")
+                st.write("Ответ сервера:", token_response.text)
                 st.stop()
 
             access_token = token_response.json().get("access_token")
 
-            # 2. Отправляем фото на анализ
+            # 2. Анализируем фото
             chat_url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {access_token}",
@@ -79,6 +81,7 @@ if uploaded_file is not None:
                 st.success("Готово! Вот что ты там намешал:")
                 st.markdown(result["choices"][0]["message"]["content"])
             else:
-                st.error(f"Ошибка анализа: {response.status_code}\n{response.text[:400]}")
+                st.error(f"Ошибка анализа: {response.status_code}")
+                st.write(response.text)
 
 st.caption("ЖруСчиталка © 2026 • Работает на GigaChat")
