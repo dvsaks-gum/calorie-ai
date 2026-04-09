@@ -9,10 +9,9 @@ st.set_page_config(page_title="ЖруСчиталка", page_icon="🍖", layout
 st.title("🔥 ЖруСчиталка")
 st.subheader("Считаем, сколько ты сегодня НАЖРАЛ по фото")
 
-# Ключ из Secrets
 credentials = st.secrets.get("GIGACHAT_CREDENTIALS")
 if not credentials:
-    st.error("❌ Нет ключа GigaChat. Добавь в Secrets → GIGACHAT_CREDENTIALS")
+    st.error("❌ Ключ не найден. Проверь Secrets → GIGACHAT_CREDENTIALS")
     st.stop()
 
 model = GigaChat(credentials=credentials, verify_ssl_certs=False, model="GigaChat-Max")
@@ -29,12 +28,19 @@ if uploaded_file is not None:
             image.save(buffered, format="JPEG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
+            # ← ИСПРАВЛЕННЫЙ ФОРМАТ ДЛЯ GIGACHAT VISION
             messages = [
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Ты дерзкий и вредный эксперт по питанию. Посмотри на фото и скажи максимально честно и с юмором:\n1. Что именно человек собрался сожрать\n2. Примерные порции\n3. Калории + БЖУ\n4. Добавь комментарий в стиле 'ну ты и обжора' или 'диета сегодня умерла'"},
-                        {"type": "image_url", "image_url": f"data:image/jpeg;base64,{img_base64}"}
+                        {
+                            "type": "text",
+                            "text": "Ты дерзкий и вредный эксперт по питанию. Посмотри на фото еды и скажи максимально честно и с юмором:\n1. Что именно человек собрался сожрать\n2. Примерные порции в граммах\n3. Калории + БЖУ\n4. Добавь комментарий в стиле 'ну ты и обжора', 'это вообще можно есть?' или 'диета сегодня умерла'"
+                        },
+                        {
+                            "type": "image",
+                            "image": img_base64          # ← только base64, без data:
+                        }
                     ]
                 }
             ]
