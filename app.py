@@ -13,7 +13,6 @@ st.set_page_config(
 st.title("🔥 ЖруСчиталка")
 st.subheader("Считаем, сколько ты сегодня НАЖРАЛ по фото")
 
-# Ключ
 api_key = st.secrets.get("GROK_API_KEY")
 if not api_key:
     st.error("❌ Ключ не найден. Проверь Secrets → GROK_API_KEY")
@@ -28,13 +27,13 @@ if uploaded_file is not None:
     st.image(image, caption="Ого, ну ты и подготовился 👀", use_column_width=True)
     
     if st.button("🔥 Посчитать, сколько я сегодня сожрал!", type="primary", use_container_width=True):
-        with st.spinner("ЖруСчиталка внимательно жрёт глазами твою тарелку... 🤤"):
+        with st.spinner("ЖруСчиталка жрёт глазами твою тарелку... 🤤"):
             buffered = BytesIO()
             image.save(buffered, format="JPEG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
             response = client.chat.completions.create(
-                model="grok-2-vision-1212",
+                model="grok-vision-beta",          # ← вот эта модель работает
                 messages=[
                     {
                         "role": "user",
