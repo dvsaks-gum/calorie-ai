@@ -23,24 +23,31 @@ if uploaded_file is not None:
     if st.button("🔥 Посчитать, сколько я сегодня сожрал!", type="primary", use_container_width=True):
         with st.spinner("ЖруСчиталка жрёт глазами твою тарелку... 🤤"):
             
-            # Конвертируем фото
             buffered = BytesIO()
             image.save(buffered, format="JPEG")
             img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-            # 1. Получаем access token
+            # === 1. Получаем access token ===
             token_url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
             headers_token = {
                 "Authorization": f"Basic {credentials}",
                 "Content-Type": "application/x-www-form-urlencoded",
-                "RqUID": "1"  # можно любой
+                "RqUID": "1"
             }
             data_token = {"scope": "GIGACHAT_API_PERS"}
-            
-            token_response = requests.post(token_url, headers=headers_token, data=data_token, verify=False)
-            access_token = token_response.json().get("access_token")
 
-            # 2. Отправляем запрос с фото
+            token_response = requests.post(token_url, headers=headers_token, data=data_token, verify=False, timeout=10)
+
+            st.write(f"**Статус токена:** {token_response.status_code}")   # ← отладка
+            st.write(f"**Ответ сервера:** {token_response.text[:500]}...") # ← отладка
+
+            try:
+                access_token = token_response.json().get("access_token")
+            except Exception as e:
+                st.error(f"Не удалось получить токен. Ошибка: {e}")
+                st.stop()
+
+            # === 2. Отправляем фото ===
             chat_url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
             headers = {
                 "Authorization": f"Bearer {access_token}",
@@ -53,14 +60,8 @@ if uploaded_file is not None:
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "text",
-                                "text": "Ты дерзкий и вредный эксперт по питанию. Посмотри на фото еды и скажи максимально честно и с юмором:\n1. Что именно человек собрался сожрать\n2. Примерные порции в граммах\n3. Калории + БЖУ\n4. Добавь комментарий в стиле 'ну ты и обжора', 'это вообще можно есть?' или 'диета сегодня умерла'"
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}
-                            }
+                            {"type": "text", "text": "Ты дерзкий и вредный эксперт по питанию... (твой промпт)"},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
                         ]
                     }
                 ],
@@ -75,6 +76,6 @@ if uploaded_file is not None:
                 st.success("Вот что ты там намешал:")
                 st.markdown(result["choices"][0]["message"]["content"])
             else:
-                st.error(f"Ошибка API: {response.status_code}\n{response.text}")
+                st.error(f"Ошибка чата: {response.status_code}\n{response.text}")
 
 st.caption("ЖруСчиталка © 2026 • Работает напрямую через API Сбера")
